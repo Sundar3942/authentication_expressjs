@@ -62,12 +62,14 @@ app.post("/login", async (request, response) => {
   const userQuery = `SELECT * FROM user where username = '${username}';`;
   const dbUser = await db.get(userQuery);
   console.log(dbUser);
-  if (dbUser) {
+  if (dbUser !== undefined) {
     const passwordMatched = await bcrypt.compare(password, dbUser.password);
     if (passwordMatched) {
+      console.log("success");
       response.status = 200;
       response.send("Login success");
     } else {
+      console.log("password failed");
       response.status = 400;
       response.send("Invalid password");
     }
@@ -76,4 +78,32 @@ app.post("/login", async (request, response) => {
     response.send("Invalid user");
   }
 });
+app.put("/change-password", async (request, response) => {
+  const { username, oldPassword, newPassword } = request.body;
+
+  const userQuery = `SELECT * FROM user where username = '${username}';`;
+  const dbUser = await db.get(userQuery);
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  console.log(dbUser);
+  if (dbUser) {
+    const passwordMatched = await bcrypt.compare(oldPassword, dbUser.password);
+    if (passwordMatched) {
+      if (newPassword.length < 5) {
+        response.status = 400;
+        response.send("Password is too short");
+      } else {
+        console.log("matched");
+        const sqlUpdateQuery = `UPDATE user SET password = '${hashedPassword}' where username = '${username}';`;
+        response.status = 200;
+        response.send("Login success");
+      }
+    } else {
+      console.log("unmatched");
+      response.status = 400;
+      response.send("Invalid current password");
+    }
+  }
+});
+
 module.exports = app;
