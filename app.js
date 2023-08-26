@@ -66,15 +66,15 @@ app.post("/login", async (request, response) => {
     const passwordMatched = await bcrypt.compare(password, dbUser.password);
     if (passwordMatched) {
       console.log("success");
-      response.status = 200;
-      response.send("Login success");
+      response.status(200);
+      response.send("Login success!");
     } else {
       console.log("password failed");
-      response.status = 400;
+      response.status(400);
       response.send("Invalid password");
     }
   } else {
-    response.status = 400;
+    response.status(400);
     response.send("Invalid user");
   }
 });
@@ -90,17 +90,18 @@ app.put("/change-password", async (request, response) => {
     const passwordMatched = await bcrypt.compare(oldPassword, dbUser.password);
     if (passwordMatched) {
       if (newPassword.length < 5) {
-        response.status = 400;
+        response.status(400);
         response.send("Password is too short");
       } else {
         console.log("matched");
         const sqlUpdateQuery = `UPDATE user SET password = '${hashedPassword}' where username = '${username}';`;
-        response.status = 200;
-        response.send("Login success");
+        await db.run(sqlUpdateQuery);
+        response.status(200);
+        response.send("Password updated");
       }
     } else {
       console.log("unmatched");
-      response.status = 400;
+      response.status(400);
       response.send("Invalid current password");
     }
   }
